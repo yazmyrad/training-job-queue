@@ -3,6 +3,7 @@ import os
 import signal
 import time
 import uuid
+import threading
 
 from src.db.connection import get_conn 
 
@@ -52,26 +53,47 @@ def claim(conn):
     with conn.cursor() as cur:
         cur.execute(CLAIM_SQL, (WORKER_ID, LEASE_SECS))
         return cur.fetchone()
+    
+def _heartbeat(stop_event, job_id, attempt):
+    while not stop_event.wait(LEASE_SECS / 3):
+        try:
+            with get_conn() as hb_conn:              
+                with hb_conn.cursor() as cur:
+                    cur.execute("""
+                        UPDATE jobs
+                        SET lease_until = now() + %s * interval '1 second'
+                        WHERE id = %s AND worker_id = %s AND attempt = %s
+                        RETURNING id;
+                    """, (LEASE_SECS, str(job_id), WORKER_ID, attempt))
+                    if cur.fetchone() is None:
+                        log.warning("worker %s lost lease on %s (attempt=%d)",
+                                    WORKER_ID, job_id, attempt)
+                        return
+        except Exception as e:
+            log.warning("heartbeat error: %s", e)
 
 def execute_and_complete(conn, job_id, attempt):
-    time.sleep(0.05)
-
-    with conn:
-        with conn.cursor() as cur:
-            cur.execute(FENCE_SQL, (str(job_id), WORKER_ID, attempt))
-            if cur.fetchone() is None:
-                log.warning(
-                    "worker %s LOST job=%s attempt=%d (no longer owner)",
-                    WORKER_ID, job_id, attempt,
-                )
-                return "lost"
-
-            cur.execute(SIDE_EFFECT_SQL, (str(job_id), attempt))
-            log.info(
-                "worker %s succeeded job=%s attempt=%d side_effect_rows=%d",
-                WORKER_ID, job_id, attempt, cur.rowcount,
-            )
-            return "succeeded"
+    stop_hb = threading.Event()
+    hb_thread = threading.Thread(
+        target=_heartbeat, args=(stop_hb, job_id, attempt), daemon=True,
+    )
+    hb_thread.start()
+    try:
+        time.sleep(0.05)              
+        with conn:
+            with conn.cursor() as cur:
+                cur.execute(FENCE_SQL, (str(job_id), WORKER_ID, attempt))
+                if cur.fetchone() is None:
+                    log.warning("worker %s LOST job=%s attempt=%d",
+                                WORKER_ID, job_id, attempt)
+                    return "lost"
+                cur.execute(SIDE_EFFECT_SQL, (str(job_id), attempt))
+                log.info("worker %s succeeded job=%s attempt=%d rows=%d",
+                         WORKER_ID, job_id, attempt, cur.rowcount)
+                return "succeeded"
+    finally:
+        stop_hb.set()
+        hb_thread.join(timeout=1)
 
 def main():
     log.info("worker %s starting", WORKER_ID)
