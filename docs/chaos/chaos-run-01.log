@@ -1,0 +1,122 @@
+=== Chaos Harness === jobs=10000 workers=8 kill_mean=2.0s
+
+[1/6] reset DB...
+[2/6] enqueue 10000 baseline jobs...
+  done in 0.5s
+[3/6] fetched 500 keys for dup-POST thread
+
+[4/6] starting 8 workers...
+[5/6] chaos running, waiting for drain...
+  ... draining: 9997 remaining
+  ... draining: 9907 remaining
+  ... draining: 9793 remaining
+  ... draining: 9655 remaining
+  ... draining: 9523 remaining
+  ... draining: 9396 remaining
+  ... draining: 9261 remaining
+  ... draining: 9134 remaining
+  ... draining: 9006 remaining
+  ... draining: 8861 remaining
+  ... draining: 8731 remaining
+  ... draining: 8582 remaining
+  ... draining: 8442 remaining
+  ... draining: 8351 remaining
+  ... draining: 8266 remaining
+  ... draining: 8130 remaining
+  ... draining: 8005 remaining
+  ... draining: 7884 remaining
+  ... draining: 7765 remaining
+  ... draining: 7657 remaining
+  ... draining: 7540 remaining
+  ... draining: 7406 remaining
+  ... draining: 7286 remaining
+  ... draining: 7158 remaining
+  ... draining: 7038 remaining
+  ... draining: 6935 remaining
+  ... draining: 6843 remaining
+  ... draining: 6762 remaining
+  ... draining: 6657 remaining
+  ... draining: 6551 remaining
+  ... draining: 6434 remaining
+  ... draining: 6333 remaining
+  ... draining: 6238 remaining
+  ... draining: 6106 remaining
+  ... draining: 5987 remaining
+  ... draining: 5880 remaining
+  ... draining: 5765 remaining
+  ... draining: 5644 remaining
+  ... draining: 5537 remaining
+  ... draining: 5430 remaining
+  ... draining: 5318 remaining
+  ... draining: 5212 remaining
+  ... draining: 5094 remaining
+  ... draining: 4973 remaining
+  ... draining: 4860 remaining
+  ... draining: 4727 remaining
+  ... draining: 4597 remaining
+  ... draining: 4485 remaining
+  ... draining: 4367 remaining
+  ... draining: 4236 remaining
+  ... draining: 4126 remaining
+  ... draining: 4003 remaining
+  ... draining: 3868 remaining
+  ... draining: 3749 remaining
+  ... draining: 3626 remaining
+  ... draining: 3525 remaining
+  ... draining: 3389 remaining
+  ... draining: 3273 remaining
+  ... draining: 3168 remaining
+  ... draining: 3058 remaining
+  ... draining: 2945 remaining
+  ... draining: 2834 remaining
+  ... draining: 2746 remaining
+  ... draining: 2683 remaining
+  ... draining: 2607 remaining
+  ... draining: 2495 remaining
+  ... draining: 2363 remaining
+  ... draining: 2247 remaining
+  ... draining: 2153 remaining
+  ... draining: 2043 remaining
+  ... draining: 1915 remaining
+  ... draining: 1776 remaining
+  ... draining: 1654 remaining
+  ... draining: 1511 remaining
+  ... draining: 1358 remaining
+  ... draining: 1232 remaining
+  ... draining: 1096 remaining
+  ... draining: 935 remaining
+  ... draining: 818 remaining
+  ... draining: 685 remaining
+  ... draining: 546 remaining
+  ... draining: 453 remaining
+  ... draining: 321 remaining
+  ... draining: 172 remaining
+  ... draining: 35 remaining
+
+[6/6] drained=True in 182.2s
+
+--- FLEET ---
+  kills=91  spawns=99
+
+--- CLIENT ---
+  dup_posts=1256 (201=0 200=1256 err=0)
+  cancels=405 (200=402 409=3 404=0 err=0)
+
+--- DB ---
+  total: 10000
+  succeeded: 9598
+  failed: 0
+  cancelled: 402
+  running: 0
+  queued: 0
+  effects: 9598
+  dups: 0
+  success_no_effect: 0
+  cancel_with_effect: 0
+
+--- WORKER LOGS ---
+  LOST events (fence rejected a stale worker): 6
+  reaped events: 0
+  side_effect_rows=0 (UNIQUE blocked a dup): 0
+
+=== PASS ===

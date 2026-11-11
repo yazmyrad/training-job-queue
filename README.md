@@ -65,6 +65,10 @@ src/
     reaper-test.sh         # B.4 evidence script
     chaos-integration.sh   # integration evidence script
     chaos_harness.py       # main chaos harness
+  docs/chaos/
+    b1-proof.txt ... b4-proof.txt
+    pre-chaos-integration.txt
+    chaos-run-01.log ... chaos-run-03.log
 
 DESIGN.md                   # one-page design note
 ```
