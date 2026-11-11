@@ -1,0 +1,13 @@
+=== Pre-Chaos Integration Test ===
+
+  total:       20
+  succeeded:   20
+  failed:      0
+  running:     0
+  queued:      0
+  cancelled:   0
+  effects:     20
+  duplicates:  0
+  succeeded w/o effect: 0
+
+=== PASS ===

@@ -1,0 +1,19 @@
+=== B.1 Claim Loop Test ===
+
+--- split after first claim (2 workers) ---
+ worker_id | count 
+-----------+-------
+ w1        |     1
+ w2        |     4
+(2 rows)
+
+--- after lease expiry + reclaim ---
+ worker_id | count 
+-----------+-------
+ w1        |     2
+ w2        |     3
+(2 rows)
+
+distinct workers that claimed: 2 (PASS)
+jobs reclaimed at least once:  5 (PASS)
+=== PASS ===

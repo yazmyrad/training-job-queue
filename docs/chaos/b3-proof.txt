@@ -1,0 +1,23 @@
+=== B.3 Heartbeat Test (25s job vs 10s lease) ===
+
+--- mid-execution (~10s in, lease about to expire) ---
+   state   | attempt | worker_id | last_error 
+-----------+---------+-----------+------------
+ running   |       1 | w1        | 
+(1 row)
+
+ count 
+-------
+     0
+(1 row)          ← no side effect yet, job still executing
+
+--- after completion (~25s in) ---
+   state    | attempt | worker_id | last_error 
+------------+---------+-----------+------------
+ succeeded  |       1 | w1        | 
+(1 row)
+
+ side effect count: 1  (heartbeat prevented reclaim → no second claim → one side effect)
+LOST events: 0
+claims:      1
+=== PASS ===

@@ -1,0 +1,21 @@
+=== B.2 Completion Fence + Side Effect Test ===
+
+--- invariants (10 jobs, 2 workers) ---
+   state   | count 
+-----------+-------
+ succeeded |    10
+(1 row)
+
+ side_effects 
+--------------
+           10
+(1 row)
+
+ job_id | count 
+--------+-------
+(0 rows)          ← no duplicate side effects
+
+--- fence test (fake-A stale, fake-B owns) ---
+fake-A fence UPDATE rows: 0 (expect 0)
+final state:              running|fake-B|2 (expect running|fake-B|2)
+=== PASS ===

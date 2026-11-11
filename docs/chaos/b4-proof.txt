@@ -1,0 +1,11 @@
+=== B.4 Reaper Test ===
+
+  normal job:    succeeded|1
+  poison job:    failed|5|max attempts exceeded
+  total effects: 1
+  poison effects:0
+
+  observed crashes in logs: 10   (5 crash events × 2 grep matches per traceback)
+  observed reaps in logs:   1
+
+=== PASS ===

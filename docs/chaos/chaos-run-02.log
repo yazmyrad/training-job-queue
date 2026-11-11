@@ -1,0 +1,141 @@
+=== Chaos Harness === jobs=10000 workers=8 kill_mean=2.0s
+
+[1/6] reset DB...
+[2/6] enqueue 10000 baseline jobs...
+  done in 0.5s
+[3/6] fetched 500 keys for dup-POST thread
+
+[4/6] starting 8 workers...
+[5/6] chaos running, waiting for drain...
+  ... draining: 9995 remaining
+  ... draining: 9908 remaining
+  ... draining: 9820 remaining
+  ... draining: 9747 remaining
+  ... draining: 9672 remaining
+  ... draining: 9578 remaining
+  ... draining: 9495 remaining
+  ... draining: 9400 remaining
+  ... draining: 9328 remaining
+  ... draining: 9275 remaining
+  ... draining: 9206 remaining
+  ... draining: 9102 remaining
+  ... draining: 9005 remaining
+  ... draining: 8888 remaining
+  ... draining: 8754 remaining
+  ... draining: 8643 remaining
+  ... draining: 8516 remaining
+  ... draining: 8368 remaining
+  ... draining: 8261 remaining
+  ... draining: 8144 remaining
+  ... draining: 8009 remaining
+  ... draining: 7887 remaining
+  ... draining: 7779 remaining
+  ... draining: 7645 remaining
+  ... draining: 7571 remaining
+  ... draining: 7458 remaining
+  ... draining: 7337 remaining
+  ... draining: 7261 remaining
+  ... draining: 7180 remaining
+  ... draining: 7079 remaining
+  ... draining: 6985 remaining
+  ... draining: 6891 remaining
+  ... draining: 6800 remaining
+  ... draining: 6715 remaining
+  ... draining: 6646 remaining
+  ... draining: 6543 remaining
+  ... draining: 6463 remaining
+  ... draining: 6362 remaining
+  ... draining: 6238 remaining
+  ... draining: 6145 remaining
+  ... draining: 6049 remaining
+  ... draining: 5932 remaining
+  ... draining: 5820 remaining
+  ... draining: 5722 remaining
+  ... draining: 5597 remaining
+  ... draining: 5483 remaining
+  ... draining: 5399 remaining
+  ... draining: 5299 remaining
+  ... draining: 5217 remaining
+  ... draining: 5145 remaining
+  ... draining: 5037 remaining
+  ... draining: 4931 remaining
+  ... draining: 4851 remaining
+  ... draining: 4759 remaining
+  ... draining: 4654 remaining
+  ... draining: 4558 remaining
+  ... draining: 4449 remaining
+  ... draining: 4346 remaining
+  ... draining: 4250 remaining
+  ... draining: 4141 remaining
+  ... draining: 4025 remaining
+  ... draining: 3930 remaining
+  ... draining: 3866 remaining
+  ... draining: 3794 remaining
+  ... draining: 3716 remaining
+  ... draining: 3654 remaining
+  ... draining: 3585 remaining
+  ... draining: 3529 remaining
+  ... draining: 3467 remaining
+  ... draining: 3370 remaining
+  ... draining: 3270 remaining
+  ... draining: 3173 remaining
+  ... draining: 3107 remaining
+  ... draining: 3040 remaining
+  ... draining: 2959 remaining
+  ... draining: 2872 remaining
+  ... draining: 2779 remaining
+  ... draining: 2687 remaining
+  ... draining: 2586 remaining
+  ... draining: 2509 remaining
+  ... draining: 2420 remaining
+  ... draining: 2329 remaining
+  ... draining: 2258 remaining
+  ... draining: 2170 remaining
+  ... draining: 2104 remaining
+  ... draining: 2036 remaining
+  ... draining: 1957 remaining
+  ... draining: 1908 remaining
+  ... draining: 1835 remaining
+  ... draining: 1712 remaining
+  ... draining: 1616 remaining
+  ... draining: 1518 remaining
+  ... draining: 1389 remaining
+  ... draining: 1235 remaining
+  ... draining: 1132 remaining
+  ... draining: 1011 remaining
+  ... draining: 892 remaining
+  ... draining: 799 remaining
+  ... draining: 679 remaining
+  ... draining: 541 remaining
+  ... draining: 431 remaining
+  ... draining: 293 remaining
+  ... draining: 144 remaining
+  ... draining: 31 remaining
+
+[6/6] drained=True in 228.3s
+
+--- FLEET ---
+  kills=111  spawns=119
+
+--- CLIENT ---
+  dup_posts=1506 (201=0 200=1506 err=0)
+  cancels=450 (200=449 409=1 404=0 err=0)
+
+--- DB ---
+  total: 10000
+  succeeded: 9551
+  failed: 0
+  cancelled: 449
+  running: 0
+  queued: 0
+  effects: 9551
+  dups: 0
+  success_no_effect: 0
+  cancel_with_effect: 0
+
+--- WORKER LOGS ---
+  LOST events (fence rejected a stale worker): 6
+  reaped events: 0
+  side_effect_rows=0 (UNIQUE blocked a dup): 0
+
+=== PASS ===
