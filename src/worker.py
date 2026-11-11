@@ -16,6 +16,7 @@ log = logging.getLogger("worker")
 WORKER_ID = os.environ.get("WORKER_ID") or f"w-{uuid.uuid4().hex[:6]}"
 LEASE_SECS = 10          
 POLL_INTERVAL = 0.5
+MAX_ATTEMPTS = 5
 
 CLAIM_SQL = """
     UPDATE jobs
@@ -26,8 +27,9 @@ CLAIM_SQL = """
         updated_at = now()
     WHERE id = (
         SELECT id FROM jobs
-        WHERE state = 'queued'
-           OR (state = 'running' AND lease_until < now())
+        WHERE (state = 'queued'
+           OR (state = 'running' AND lease_until < now()))
+            AND attempt < %s                              
         ORDER BY created_at
         FOR UPDATE SKIP LOCKED
         LIMIT 1
@@ -47,31 +49,64 @@ SIDE_EFFECT_SQL="""
     VALUES (%s, %s)
     ON CONFLICT (job_id) DO NOTHING;
 """
+REAP_SQL = """
+    UPDATE jobs
+    SET state = 'failed',
+        last_error = 'max attempts exceeded',
+        updated_at = now()
+    WHERE state = 'running'
+      AND lease_until < now()
+      AND attempt >= %s
+    RETURNING id;
+"""
+
+HEARTBEAT_SQL="""
+        UPDATE jobs
+        SET lease_until = now() + %s * interval '1 second'
+        WHERE id = %s AND worker_id = %s AND attempt = %s
+        RETURNING id;
+    """
 
 
 def claim(conn):
     with conn.cursor() as cur:
-        cur.execute(CLAIM_SQL, (WORKER_ID, LEASE_SECS))
+        cur.execute(CLAIM_SQL, (WORKER_ID, LEASE_SECS, MAX_ATTEMPTS))
         return cur.fetchone()
+
+def reap(conn):
+    try:
+        with conn:
+            with conn.cursor() as cur:
+                cur.execute(REAP_SQL, (MAX_ATTEMPTS,))
+                rows = cur.fetchall()
+                for (jid,) in rows:
+                    log.warning("reaped job=%s (attempt>=%d) -> failed",
+                                jid, MAX_ATTEMPTS)
+    except Exception as e:
+        log.warning("reaper error: %s", e)
     
 def _heartbeat(stop_event, job_id, attempt):
-    while not stop_event.wait(LEASE_SECS / 3):
-        try:
-            with get_conn() as hb_conn:              
-                with hb_conn.cursor() as cur:
-                    cur.execute("""
-                        UPDATE jobs
-                        SET lease_until = now() + %s * interval '1 second'
-                        WHERE id = %s AND worker_id = %s AND attempt = %s
-                        RETURNING id;
-                    """, (LEASE_SECS, str(job_id), WORKER_ID, attempt))
-                    if cur.fetchone() is None:
-                        log.warning("worker %s lost lease on %s (attempt=%d)",
-                                    WORKER_ID, job_id, attempt)
-                        return
-        except Exception as e:
-            log.warning("heartbeat error: %s", e)
+    hb_conn = get_conn()
+    try:
+        while not stop_event.wait(LEASE_SECS / 3):
+            try:
+                with hb_conn:           
+                    with hb_conn.cursor() as cur:
+                        cur.execute(HEARTBEAT_SQL,
+                                    (LEASE_SECS, str(job_id), WORKER_ID, attempt))
+                        if cur.fetchone() is None:
+                            log.warning(
+                                "worker %s lost lease on %s (attempt=%d)",
+                                WORKER_ID, job_id, attempt,
+                            )
+                            return
+            except Exception as e:
+                log.warning("heartbeat error: %s", e)
+    finally:
+        hb_conn.close()
 
+POISON_TEST_ENABLED = os.environ.get("POISON_TEST") == "1"
+SIMULATED_WORK_SECS = 0.05      
 def execute_and_complete(conn, job_id, attempt):
     stop_hb = threading.Event()
     hb_thread = threading.Thread(
@@ -79,7 +114,15 @@ def execute_and_complete(conn, job_id, attempt):
     )
     hb_thread.start()
     try:
-        time.sleep(0.05)              
+        time.sleep(SIMULATED_WORK_SECS)
+
+        if POISON_TEST_ENABLED:
+            with conn.cursor() as cur:
+                cur.execute("SELECT payload FROM jobs WHERE id = %s", (str(job_id),))
+                row = cur.fetchone()
+                if row and "poison" in str(row[0]):
+                    raise RuntimeError("simulated crash (POISON_TEST)")
+
         with conn:
             with conn.cursor() as cur:
                 cur.execute(FENCE_SQL, (str(job_id), WORKER_ID, attempt))
@@ -108,14 +151,23 @@ def main():
 
     conn = get_conn()
     try:
+        last_reap = 0
+        empty_polls = 0                
         while not stop["flag"]:
-            with conn:                       
+            with conn:
                 row = claim(conn)
             if row:
                 job_id, attempt = row
                 log.info("worker %s claimed job=%s attempt=%d", WORKER_ID, job_id, attempt)
-                result = execute_and_complete(conn, job_id, attempt)
+                execute_and_complete(conn, job_id, attempt)
+                empty_polls = 0
             else:
+                empty_polls += 1
+                if time.time() - last_reap > 5:
+                    reap(conn)
+                    last_reap = time.time()
+                if empty_polls % 10 == 0:
+                    log.info("worker %s idle (%d empty polls)", WORKER_ID, empty_polls)
                 time.sleep(POLL_INTERVAL)
     finally:
         conn.close()
