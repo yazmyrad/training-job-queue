@@ -1,3 +1,5 @@
+**Читать на Русском** [README.ru](README.ru.md)
+
 # training-job-queue
 
 A durable job queue with crash-recoverable workers, built for the Soup backend task.
