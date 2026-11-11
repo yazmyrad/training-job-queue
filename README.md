@@ -8,8 +8,6 @@ FastAPI HTTP API, Postgres storage, and N worker processes that claim jobs atomi
 
 ---
 
-## TL;DR
-
 | | |
 |---|---|
 | **Storage** | Postgres 16, `FOR UPDATE SKIP LOCKED` claim |
@@ -24,7 +22,7 @@ FastAPI HTTP API, Postgres storage, and N worker processes that claim jobs atomi
 ## Quickstart
 
 ```bash
-git clone <repo> && cd training-job-queue
+git clone https://github.com/yazmyrad/training-job-queue.git && cd training-job-queue
 docker compose up --build
 ```
 
@@ -137,8 +135,9 @@ Every mechanism was tested in isolation before chaos testing. Raw outputs are in
 | Run | Jobs | Kills | Duration | Succeeded | Cancelled | Failed | Running | Queued | Effects | Dups | LOST | Verdict |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 | 01 | 10,000 | 85 | 173.6 s | 9,616 | 384 | 0 | 0 | 0 | 9,616 | 0 | 1 | **PASS** |
-| 02 | 10,000 | _TBD_ | | | | | | | | | | |
-| 03 | 10,000 | _TBD_ | | | | | | | | | | |
+| 02 | 10,000 | 106 | 218.3 s | 9,557 | 443 | 0 | 0 | 0 | 9,557 | 0 | 3 | **PASS** |
+| 03 | 10,000 | 102 | 209.5 s | 9,564 | 436 | 0 | 0 | 0 | 9,564 | 0 | 3 | **PASS** |
+| **Aggregate** | **30,000** | **293** | — | **28,737** | **1,263** | **0** | **0** | **0** | **28,737** | **0** | **7** | **3/3 PASS** |
 
 **Run 01 client stats:**
 
