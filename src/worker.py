@@ -34,12 +34,44 @@ CLAIM_SQL = """
     RETURNING id, attempt;
 """
 
+FENCE_SQL="""
+    UPDATE jobs
+    SET state = 'succeeded', updated_at = now()
+    WHERE id = %s AND state = 'running' AND worker_id = %s AND attempt = %s
+    RETURNING id;
+"""
+
+SIDE_EFFECT_SQL="""
+    INSERT INTO side_effects (job_id, attempt)
+    VALUES (%s, %s)
+    ON CONFLICT (job_id) DO NOTHING;
+"""
+
 
 def claim(conn):
     with conn.cursor() as cur:
         cur.execute(CLAIM_SQL, (WORKER_ID, LEASE_SECS))
         return cur.fetchone()
 
+def execute_and_complete(conn, job_id, attempt):
+    time.sleep(0.05)
+
+    with conn:
+        with conn.cursor() as cur:
+            cur.execute(FENCE_SQL, (str(job_id), WORKER_ID, attempt))
+            if cur.fetchone() is None:
+                log.warning(
+                    "worker %s LOST job=%s attempt=%d (no longer owner)",
+                    WORKER_ID, job_id, attempt,
+                )
+                return "lost"
+
+            cur.execute(SIDE_EFFECT_SQL, (str(job_id), attempt))
+            log.info(
+                "worker %s succeeded job=%s attempt=%d side_effect_rows=%d",
+                WORKER_ID, job_id, attempt, cur.rowcount,
+            )
+            return "succeeded"
 
 def main():
     log.info("worker %s starting", WORKER_ID)
@@ -59,8 +91,8 @@ def main():
                 row = claim(conn)
             if row:
                 job_id, attempt = row
-                time.sleep(0.2)
                 log.info("worker %s claimed job=%s attempt=%d", WORKER_ID, job_id, attempt)
+                result = execute_and_complete(conn, job_id, attempt)
             else:
                 time.sleep(POLL_INTERVAL)
     finally:
